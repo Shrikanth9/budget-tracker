@@ -7,8 +7,33 @@ import {
   Zap,
 } from "lucide-react";
 
+
+interface Stat {
+  value: string;
+  label: string;
+}
+
+interface Feature {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}
+
+interface Step {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}
+
+interface Testimonial {
+  name: string;
+  role: string;
+  image: string;
+  quote: string;
+}
+
 // Stats Data
-export const statsData = [
+export const statsData: Stat[] = [
   {
     value: "50K+",
     label: "Active Users",
@@ -28,7 +53,7 @@ export const statsData = [
 ];
 
 // Features Data
-export const featuresData = [
+export const featuresData: Feature[] = [
   {
     icon: <BarChart3 className="h-8 w-8 text-blue-600" />,
     title: "Advanced Analytics",
@@ -64,7 +89,7 @@ export const featuresData = [
 ];
 
 // How It Works Data
-export const howItWorksData = [
+export const howItWorksData: Step[] = [
   {
     icon: <CreditCard className="h-8 w-8 text-blue-600" />,
     title: "1. Create Your Account",
@@ -86,7 +111,7 @@ export const howItWorksData = [
 ];
 
 // Testimonials Data
-export const testimonialsData = [
+export const testimonialsData: Testimonial[] = [
   {
     name: "Sarah Johnson",
     role: "Small Business Owner",
