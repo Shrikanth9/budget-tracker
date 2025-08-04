@@ -123,11 +123,18 @@
 
 @layer utilities {
   .gradient {
-     @apply bg-gradient-to-br from-blue-600 to-purple-600;
+    background-image: linear-gradient(to bottom right, #2563eb, #7c3aed);
   }
 
   .gradient-title {
-    @apply gradient font-extrabold tracking-tighter pr-2 pb-2 text-transparent bg-clip-text
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    padding-right: 0.5rem;
+    padding-bottom: 0.5rem;
+    color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    background-image: linear-gradient(to bottom right, #2563eb, #7c3aed);
   }
 }
 
