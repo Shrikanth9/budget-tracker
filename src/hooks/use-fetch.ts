@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 export const useFetch = <T extends any[], R = any>(cb: (...args: T) => Promise<R>) => {
