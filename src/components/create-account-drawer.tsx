@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Drawer,
   DrawerTrigger,
@@ -22,6 +22,10 @@ import {
 } from "./ui/select";
 import { Switch } from "./ui/switch";
 import { Button } from "./ui/button";
+import { useFetch } from "@/hooks/use-fetch";
+import { createAccount } from "@/actions/dashboard";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 const CreateAccountDrawer = ({ children }: { children: React.ReactNode }) => {
   const [open, setOpen] = React.useState(false);
@@ -43,8 +47,34 @@ const CreateAccountDrawer = ({ children }: { children: React.ReactNode }) => {
     },
   });
 
+  const {
+    data: newAccount,
+    loading: createAccountLoading,
+    error,
+    fn: createAccountFn,
+  } = useFetch(createAccount);
+
+  useEffect(() => {
+    if (newAccount && !createAccountLoading) {
+      toast.success("Account created successfully!");
+      reset();
+      setOpen(false);
+    }
+  }, [createAccountLoading, newAccount]);
+
+  useEffect(() => {
+    if (error) {
+      console.error("Error creating account:", error);
+      toast.error(
+        error?.message || "An error occurred while creating the account"
+      );
+    }
+  }, [error]);
+
   const onSubmit = async (data: any) => {
-    console.log("Form submitted with data:", data);
+    console.log("Creating account with data:", data);
+
+    await createAccountFn(data);
   };
 
   return (
@@ -110,10 +140,13 @@ const CreateAccountDrawer = ({ children }: { children: React.ReactNode }) => {
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-1">
                 <label htmlFor="isDefault" className="text-sm font-medium">
-                    {" "}
-                    Set as default account{" "}
+                  {" "}
+                  Set as default account{" "}
                 </label>
-                <p className="text-sm text-muted-foreground"> This account will be selected by default for transactions </p>
+                <p className="text-sm text-muted-foreground">
+                  {" "}
+                  This account will be selected by default for transactions{" "}
+                </p>
               </div>
               <Switch
                 id="isDefault"
@@ -123,15 +156,26 @@ const CreateAccountDrawer = ({ children }: { children: React.ReactNode }) => {
             </div>
 
             <div className="flex gap-4 pt-4">
-                <DrawerClose asChild>
-                    <Button type="button" variant="outline" className="flex-1"> 
-                        Cancel 
-                    </Button>
-                </DrawerClose>
-
-                <Button type="submit" className="flex-1">
-                    Create Account
+              <DrawerClose asChild>
+                <Button type="button" variant="outline" className="flex-1">
+                  Cancel
                 </Button>
+              </DrawerClose>
+
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={createAccountLoading}
+              >
+                {createAccountLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    "Creating..."
+                  </>
+                ) : (
+                  "Create Account"
+                )}
+              </Button>
             </div>
           </form>
         </div>
