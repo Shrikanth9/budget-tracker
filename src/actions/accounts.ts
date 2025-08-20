@@ -124,16 +124,12 @@ export async function bulkDeleteTransactions(transactionIds: string[]) {
           transaction.type === "EXPENSE"
             ? transaction.amount
             : -transaction.amount;
-        acc[transaction.accountId]
-          ? acc[transaction.accountId] + change
-          : change;
+        acc[transaction.accountId] = (acc[transaction.accountId] || 0) + change;
         return acc;
       },
       {}
     );
 
-    console.log("Account balance changes ", accountBalanceChanges);
-    
     await db.$transaction(async (tx: any) => {
         await tx.transaction.deleteMany({
           where: {
