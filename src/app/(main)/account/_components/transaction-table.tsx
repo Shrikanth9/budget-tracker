@@ -1,5 +1,6 @@
 "use client";
 
+import { bulkDeleteTransactions } from "@/actions/accounts";
 import { categoryColors } from "@/components/data/categories";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ import {
   TooltipProvider,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import { useFetch } from "@/hooks/use-fetch";
 import { format } from "date-fns";
 import {
   ChevronDown,
@@ -48,7 +50,9 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { BarLoader } from "react-spinners";
+import { toast } from "sonner";
 
 const RECURRING_INTERVALS: Record<string, string> = {
   DAILY: "Daily",
@@ -68,6 +72,18 @@ const TransactionTable = ({ transactions }: { transactions: any[] }) => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [recurringFilter, setRecurringFilter] = useState<string>("");
+
+  const {
+    loading: deleteLoading,
+    fn: deleteFn,
+    data: deleted,
+  } = useFetch(bulkDeleteTransactions);
+
+  useEffect(() => {
+    if(deleted && !deleteLoading) {
+    toast.error("Transactions deleted successfully")
+    }
+}, [deleted, deleteLoading])
 
   const filteredAndSortedTransactions = useMemo(() => {
     let result = [...transactions];
@@ -142,7 +158,13 @@ const TransactionTable = ({ transactions }: { transactions: any[] }) => {
   };
 
   const handleBulkDelete = (ids: string[]) => {
-    // Implement bulk delete logic here
+     if(!window.confirm(
+        `Are you sure you want to delete ${selectedIds.length} transactions`
+     )) {
+      return;
+     }
+
+     deleteFn(selectedIds);
   };
 
   const handleClearFilters = () => {
@@ -154,6 +176,7 @@ const TransactionTable = ({ transactions }: { transactions: any[] }) => {
 
   return (
     <div className="space-y-4">
+      { deleteLoading && <BarLoader className="mt-4" width="100%" color="#9333ea"/>}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -364,7 +387,7 @@ const TransactionTable = ({ transactions }: { transactions: any[] }) => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <DropdownMenuLabel
+                        <DropdownMenuItem
                           onClick={() => {
                             router.push(
                               `/transaction/create?edit=${transaction.id}`
@@ -372,12 +395,12 @@ const TransactionTable = ({ transactions }: { transactions: any[] }) => {
                           }}
                         >
                           Edit
-                        </DropdownMenuLabel>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => {
-                            //  deleteFn([transaction.id])
+                             deleteFn([transaction.id])
                           }}
                         >
                           Delete
