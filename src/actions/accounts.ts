@@ -131,12 +131,15 @@ export async function bulkDeleteTransactions(transactionIds: string[]) {
     );
 
     await db.$transaction(async (tx: any) => {
-        await tx.transaction.deleteMany({
-          where: {
-            id: { in: transactionIds },
-            userId: user.id
-          }
-        })
+        await Promise.all(
+          transactionIds.map(id =>
+            tx.transaction.delete({
+              where: {
+                id,
+              },
+            })
+          )
+        )
 
         for (const [accountId, change] of Object.entries(accountBalanceChanges)) {
           await tx.account.update({
