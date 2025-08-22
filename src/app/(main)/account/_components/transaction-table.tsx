@@ -40,6 +40,8 @@ import { useFetch } from "@/hooks/use-fetch";
 import { format } from "date-fns";
 import {
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   Clock,
   MoreHorizontal,
@@ -53,6 +55,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { BarLoader } from "react-spinners";
 import { toast } from "sonner";
+
+const ITEMS_PER_PAGE = 10;
 
 const RECURRING_INTERVALS: Record<string, string> = {
   DAILY: "Daily",
@@ -72,6 +76,7 @@ const TransactionTable = ({ transactions }: { transactions: any[] }) => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [recurringFilter, setRecurringFilter] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   const {
     loading: deleteLoading,
@@ -132,6 +137,18 @@ const TransactionTable = ({ transactions }: { transactions: any[] }) => {
 
   }, [transactions, searchTerm, typeFilter, recurringFilter, sortConfig]);
 
+  const totalPages = Math.ceil(filteredAndSortedTransactions.length / ITEMS_PER_PAGE);
+
+  const paginatedTransactions = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    return filteredAndSortedTransactions.slice(start, end);
+  }, [filteredAndSortedTransactions, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  }
+
   const handleSort = (field: string) => {
     setSortConfig((prev) => ({
       field,
@@ -157,14 +174,15 @@ const TransactionTable = ({ transactions }: { transactions: any[] }) => {
     });
   };
 
-  const handleBulkDelete = (ids: string[]) => {
+  const handleBulkDelete = async() => {
      if(!window.confirm(
         `Are you sure you want to delete ${selectedIds.length} transactions`
      )) {
       return;
      }
 
-     deleteFn(selectedIds);
+     await deleteFn(selectedIds);
+     setSelectedIds([]);
   };
 
   const handleClearFilters = () => {
@@ -172,6 +190,7 @@ const TransactionTable = ({ transactions }: { transactions: any[] }) => {
     setTypeFilter("");
     setRecurringFilter("");
     setSelectedIds([]);
+    setCurrentPage(1)
   };
 
   return (
@@ -215,7 +234,7 @@ const TransactionTable = ({ transactions }: { transactions: any[] }) => {
                 variant="destructive"
                 size="sm"
                 onClick={() => {
-                  handleBulkDelete(selectedIds);
+                  handleBulkDelete();
                 }}
               >
                 <Trash className="h-4 w-4 mr-2"/>
@@ -300,7 +319,7 @@ const TransactionTable = ({ transactions }: { transactions: any[] }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAndSortedTransactions.length == 0 ? (
+            {paginatedTransactions.length == 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={7}
@@ -310,7 +329,7 @@ const TransactionTable = ({ transactions }: { transactions: any[] }) => {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAndSortedTransactions.map((transaction) => (
+              paginatedTransactions.map((transaction) => (
                 <TableRow key={transaction.id}>
                   <TableCell className="font-medium">
                     <Checkbox
@@ -414,6 +433,29 @@ const TransactionTable = ({ transactions }: { transactions: any[] }) => {
           </TableBody>
         </Table>
       </div>
+      { totalPages > 1 && (
+         <div className="flex items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage == 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage == totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+         </div>
+      )}
     </div>
   );
 };
