@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import ReceiptScanner from "./receipt-scanner";
 
 const AddTransactionForm = ({
   accounts = [],
@@ -80,6 +81,19 @@ const AddTransactionForm = ({
      transactionFn(formData)
   }
 
+  const handleScanComplete = (scannedData: any) => {
+    if(scannedData) {
+        setValue("amount", scannedData.amount.toString());
+        setValue("date", new Date(scannedData.date));
+        if(scannedData.description) {
+          setValue("description", scannedData.data.description)
+        }
+        if(scannedData.category) {
+          setValue("category", scannedData.data.category)
+        }
+    }
+  }
+
   useEffect(() => {
      if(transactionResult?.success && !transactionLoading) {
         toast.success("Transaction created successfully")
@@ -92,6 +106,7 @@ const AddTransactionForm = ({
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+      <ReceiptScanner onScanComplete={handleScanComplete}/>
       <div className="space-y-2">
         <label className="text-sm font-medium"> Type </label>
         <Select
@@ -100,7 +115,7 @@ const AddTransactionForm = ({
           }
           defaultValue={type}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Theme" />
           </SelectTrigger>
           <SelectContent>
@@ -134,13 +149,13 @@ const AddTransactionForm = ({
             onValueChange={(value) => setValue("accountId", value)}
             defaultValue={getValues("accountId")}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Select Account" />
             </SelectTrigger>
             <SelectContent>
               {accounts.map((account) => (
                 <SelectItem key={account.id} value={account.id}>
-                  {account.name} {parseFloat(account.balance.toFixed(2))}
+                  {account.name} - {parseFloat(account.balance.toFixed(2))}
                 </SelectItem>
               ))}
               <CreateAccountDrawer>
@@ -166,7 +181,7 @@ const AddTransactionForm = ({
           onValueChange={(value) => setValue("category", value)}
           defaultValue={getValues("category")}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select Category" />
           </SelectTrigger>
           <SelectContent>
@@ -266,14 +281,14 @@ const AddTransactionForm = ({
          <Button
             type="button"
             variant="outline"
-            className="w-full"
+            className="flex-1"
             onClick={() => router.back()}
          >
           Cancel
          </Button>
          <Button
            type="submit"
-           className="w-full"
+           className="flex-1"
            disabled={transactionLoading} 
         >
           Create Transaction

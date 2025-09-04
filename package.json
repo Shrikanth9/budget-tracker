@@ -12,6 +12,7 @@
   "dependencies": {
     "@arcjet/next": "^1.0.0-beta.11",
     "@clerk/nextjs": "^6.25.4",
+    "@google/generative-ai": "^0.24.1",
     "@hookform/resolvers": "^5.2.1",
     "@prisma/client": "^6.13.0",
     "@radix-ui/react-checkbox": "^1.3.2",
@@ -45,7 +46,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@react-email/preview-server": "^4.2.8",
+    "@react-email/preview-server": "^4.2.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
