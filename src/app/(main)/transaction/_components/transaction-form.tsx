@@ -65,6 +65,7 @@ const AddTransactionForm = ({
   } = useFetch(createTransaction);
 
   const type = watch("type");
+  const category = watch("category");
   const isRecurring = watch("isRecurring");
   const date = watch("date");
 
@@ -81,15 +82,15 @@ const AddTransactionForm = ({
      transactionFn(formData)
   }
 
-  const handleScanComplete = (scannedData: any) => {
+  const handleScanComplete = (scannedData: any) => {   
     if(scannedData) {
         setValue("amount", scannedData.amount.toString());
         setValue("date", new Date(scannedData.date));
         if(scannedData.description) {
-          setValue("description", scannedData.data.description)
+          setValue("description", scannedData.description)
         }
         if(scannedData.category) {
-          setValue("category", scannedData.data.category)
+          setValue("category", scannedData.category)
         }
     }
   }
@@ -179,7 +180,7 @@ const AddTransactionForm = ({
         <label className="text-sm font-medium"> Category </label>
         <Select
           onValueChange={(value) => setValue("category", value)}
-          defaultValue={getValues("category")}
+          value={category}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select Category" />
