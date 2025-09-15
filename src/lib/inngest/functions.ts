@@ -30,21 +30,10 @@ export const checkBudgetAlert = inngest.createFunction(
         const defaultAccount = budget.user.accounts[0];
         if(!defaultAccount) continue;
 
-           await step.run(`fetch-budget-${budget.id}`, async() => {
+           await step.run(`check-budget-${budget.id}`, async() => {
             
             const currentDate = new Date();
-
-            const startOfMonth = new Date(
-                currentDate.getFullYear(),
-                currentDate.getMonth(),
-                1
-            )
-
-            const endOfMonth = new Date(
-                currentDate.getFullYear(),
-                currentDate.getMonth() + 1,
-                0
-            )
+            currentDate.setDate(1);
 
             const expenses = await db.transaction.aggregate({
                 where: {
@@ -52,8 +41,7 @@ export const checkBudgetAlert = inngest.createFunction(
                     accountId: defaultAccount.id,
                     type: 'EXPENSE',
                     date: {
-                        gte: startOfMonth,
-                        lte: endOfMonth
+                        gte: currentDate
                     }
                 },
                 _sum: {
@@ -62,10 +50,8 @@ export const checkBudgetAlert = inngest.createFunction(
             })
 
             const totalExpenses = expenses._sum.amount?.toNumber() || 0;
-            const budgetAmount = budget.amount;
+            const budgetAmount = parseFloat(budget.amount);
             const percentUsed = ( totalExpenses / budgetAmount ) * 100;
-
-            console.log(percentUsed);
             
 
             if(percentUsed>=80 && (!budget.lastAlertSent || 
@@ -93,7 +79,6 @@ export const checkBudgetAlert = inngest.createFunction(
                     }
                 })
             }
-
      })
     }
   }

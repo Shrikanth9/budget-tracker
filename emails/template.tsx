@@ -100,21 +100,21 @@ export default function EmailTemplate({
                         <Heading style={styles.title as React.CSSProperties}> Budget Alert </Heading>
                         <Text style={styles.text}>Hello {userName}</Text>
                         <Text style={styles.text}> 
-                            You have used {data.percentageUsed}% of your budget. Please review your expenses to avoid exceeding your budget.
+                            You have used {data.percentageUsed.toFixed(2)}% of your budget. Please review your expenses to avoid exceeding your budget.
                         </Text>
                         <Section style={styles.statsContainer}>
                             <div style={styles.stat}>
                                 <Text style={styles.text}>Budget amount</Text>
-                                <Text style={styles.heading}>{data.budgetAmount}</Text>
+                                <Text style={styles.heading}>{data.budgetAmount.toFixed(2)}</Text>
                             </div>
                             <div style={styles.stat}>
                                 <Text style={styles.text}>Spent so far</Text>
-                                <Text style={styles.heading}>{data.totalExpenses}</Text>
+                                <Text style={styles.heading}>{data.totalExpenses.toFixed(2)}</Text>
                             </div>
                             <div style={styles.stat}>
                                 <Text style={styles.text}>Remaining</Text>
                                 <Text style={styles.heading}>
-                                    {data.budgetAmount - data.totalExpenses}
+                                    {(data.budgetAmount - data.totalExpenses).toFixed(2)}
                                 </Text>
                             </div>
                         </Section>
