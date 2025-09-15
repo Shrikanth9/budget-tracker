@@ -1,6 +1,6 @@
 "use client";
 
-import { createTransaction } from "@/actions/transaction";
+import { createTransaction, updateTransaction } from "@/actions/transaction";
 import { transactionSchema } from "@/app/lib/schema";
 import CreateAccountDrawer from "@/components/create-account-drawer";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,8 @@ import { Switch } from "@/components/ui/switch";
 import { useFetch } from "@/hooks/use-fetch";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { CalendarIcon, Loader2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -32,12 +32,17 @@ import ReceiptScanner from "./receipt-scanner";
 const AddTransactionForm = ({
   accounts = [],
   categories = [],
+  editMode = false,
+  initialData
 }: {
   accounts?: any[];
   categories?: any[];
+  editMode: boolean,
+  initialData: any
 }) => {
   const router = useRouter()
-
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit")
   const {
     register,
     setValue,
@@ -48,11 +53,24 @@ const AddTransactionForm = ({
     reset,
   } = useForm({
     resolver: zodResolver(transactionSchema),
-    defaultValues: {
+    defaultValues: editMode && initialData ? 
+    {
+      type: initialData.type,
+      amount: initialData.amount.toString(),
+      description: initialData.description,
+      accountId: initialData.accountId,
+      category: initialData.category,
+      date: new Date(initialData.date),
+      isRecurring: initialData.isRecurring,
+      ...(initialData.recurringInterval && {
+         recurringInterval: initialData.recurringInterval
+      })
+    } : 
+    {
       type: "EXPENSE",
       amount: "",
       description: "",
-      accountId: accounts.find((ac: any) => ac.isDefault),
+      accountId: accounts.find((ac: any) => ac.isDefault)?.id || "",
       date: new Date(),
       isRecurring: false,
     },
@@ -62,7 +80,7 @@ const AddTransactionForm = ({
     loading: transactionLoading,
     fn: transactionFn,
     data: transactionResult,
-  } = useFetch(createTransaction);
+  } = useFetch(editMode ? updateTransaction : createTransaction);
 
   const type = watch("type");
   const category = watch("category");
@@ -79,8 +97,13 @@ const AddTransactionForm = ({
         amount: parseFloat(data.amount)
      }
 
-     transactionFn(formData)
-  }
+      if(editMode && editId) {
+         transactionFn(editId, formData)
+      }
+      else {
+         transactionFn("", formData)
+      }
+  };
 
   const handleScanComplete = (scannedData: any) => {   
     if(scannedData) {
@@ -99,7 +122,7 @@ const AddTransactionForm = ({
      if(transactionResult?.success && !transactionLoading) {
         toast.success("Transaction created successfully")
         reset();
-        router.push(`/account/${transactionResult.transaction.accountId}`)
+        router.push(`/account/${transactionResult.data.accountId}`)
      }
   },[transactionResult, transactionLoading])
 
@@ -107,7 +130,7 @@ const AddTransactionForm = ({
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-      <ReceiptScanner onScanComplete={handleScanComplete}/>
+      { !editMode && <ReceiptScanner onScanComplete={handleScanComplete}/> }
       <div className="space-y-2">
         <label className="text-sm font-medium"> Type </label>
         <Select
@@ -126,7 +149,7 @@ const AddTransactionForm = ({
         </Select>
 
         {errors.type && (
-          <p className="text-sm text-red-500">{errors.type.message}</p>
+          <p className="text-sm text-red-500">{errors.type.message as string}</p>
         )}
       </div>
       <div className="grid gap-6 md:grid-cols-2">
@@ -140,7 +163,7 @@ const AddTransactionForm = ({
           />
 
           {errors.amount && (
-            <p className="text-sm text-red-500">{errors.amount.message}</p>
+            <p className="text-sm text-red-500">{errors.amount.message as string}</p>
           )}
         </div>
 
@@ -171,7 +194,7 @@ const AddTransactionForm = ({
           </Select>
 
           {errors.accountId && (
-            <p className="text-sm text-red-500">{errors.accountId.message}</p>
+            <p className="text-sm text-red-500">{errors.accountId.message as string}</p>
           )}
         </div>
       </div>
@@ -195,7 +218,7 @@ const AddTransactionForm = ({
         </Select>
 
         {errors.category && (
-          <p className="text-sm text-red-500">{errors.category.message}</p>
+          <p className="text-sm text-red-500">{errors.category.message as string}</p>
         )}
       </div>
 
@@ -226,7 +249,7 @@ const AddTransactionForm = ({
         </Popover>
 
         {errors.date && (
-          <p className="text-sm text-red-500">{errors.date.message}</p>
+          <p className="text-sm text-red-500">{errors.date.message as string}</p>
         )}
       </div>
 
@@ -236,7 +259,7 @@ const AddTransactionForm = ({
         </label>
         <Input placeholder="Enter description" {...register("description")} />
         {errors.description && (
-          <p className="text-sm text-red-500">{errors.description.message}</p>
+          <p className="text-sm text-red-500">{errors.description.message as string}</p>
         )}
       </div>
 
@@ -273,7 +296,7 @@ const AddTransactionForm = ({
           </Select>
 
           {errors.recurringInterval && (
-            <p className="text-sm text-red-500">{errors.recurringInterval.message}</p>
+            <p className="text-sm text-red-500">{errors.recurringInterval.message as string}</p>
           )}
         </div>
       )}
@@ -292,8 +315,15 @@ const AddTransactionForm = ({
            className="flex-1"
            disabled={transactionLoading} 
         >
-          Create Transaction
-         </Button>
+          { transactionLoading ? (
+            <>
+             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              { editMode ? "Updating..." : "Creating..." }
+            </>
+          ) : (
+            editMode ? "Update Transaction" : "Create Transaction"
+          )}
+        </Button>
       </div>
     </form>
   );
