@@ -1,8 +1,31 @@
 import { inngest } from "./client";
 import { db } from "../prisma";
 import { sendEmail } from "@/actions/send-email";
-import EmailTemplate from "@/../emails/template"
+import EmailTemplate from "@/../emails/template";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+
+function calculateNextRecurringDate(
+  startDate: Date,
+  interval: string
+): Date | null {
+  const date = new Date(startDate);
+  switch (interval) {
+    case "DAILY":
+      date.setDate(date.getDate() + 1);
+      break;
+    case "WEEKLY":
+      date.setDate(date.getDate() + 7);
+      break;
+    case "MONTHLY":
+      date.setMonth(date.getMonth() + 1);
+      break;
+    case "YEARLY":
+      date.setFullYear(date.getFullYear() + 1);
+    default:
+      return null;
+  }
+  return date;
+}
 
 export const checkBudgetAlert = inngest.createFunction(
   { 
@@ -90,6 +113,103 @@ function isNewMonth(lastAlertDate: Date, currentDate: Date) {
         lastAlertDate.getMonth() !== currentDate.getMonth() || 
         lastAlertDate.getFullYear() !== currentDate.getFullYear()
     )
+}
+
+export const triggerRecurringTransactions = inngest.createFunction({
+  id: "trigger-recurring-transactions",
+  name: "Trigger Recurring Transactions"
+}, { cron: '0 0 * * *' }, async ({ step }) => {
+    const recurringTransactions = await step.run('fetch-recurring-transactions', async () => {
+        return await db.transaction.findMany({
+            where: {
+                isRecurring: true,
+                status: 'COMPLETED',
+                OR: [
+                   { lastProcessed: null },
+                   { nextRecurringDate: { lte: new Date() } }
+                ]
+            },
+        })
+    })
+
+    if(recurringTransactions.length > 0) {
+       const events = recurringTransactions.map((rt: any) => ({
+          name: "transaction.recurring.process",
+          data: { transactionId: rt.id, userId: rt.userId }
+       }))
+
+       await inngest.send(events)
+    }
+
+    return { triggered: recurringTransactions.length }
+})
+
+export const processRecurringTransaction = inngest.createFunction({
+  id: "process-recurring-transaction",
+  throttle: {
+    limit: 10,
+    period: "1m",
+    key: "event.data.userId"
+  }
+}, { event: "transaction.recurring.process" }, async ({ event, step }) => {
+    const { transactionId, userId } = event.data;
+    if(!transactionId || !userId) {
+        console.error("Missing transactionId or userId in event data");
+        return { error: "Missing transactionId or userId in event data" }
+    }
+    
+    await step.run("process-transaction", async () => {
+       const transaction = await db.transaction.findUnique({
+          where: {
+             id: event.data.transactionId,
+             userId: event.data.userId
+          },
+          include: {
+              account: true
+          }
+       })
+
+       if(!transaction || !isTransactionDue(transaction)) return;
+
+       await db.$transaction(async (tx: any) => {
+          const newTransaction = await tx.transaction.create({
+             data: {
+                type: transaction.type,
+                amount: transaction.amount,
+                description: `${transaction.description} (Recurring)`,
+                date: new Date(),
+                category: transaction.category,
+                userId: transaction.userId,
+                accountId: transaction.accountId,
+                isRecurring: false,
+            }
+          })
+
+          const balanceAdjustment = transaction.type === "EXPENSE" ? -transaction.amount.toNumber() : transaction.amount.toNumber();
+
+          await tx.account.update({
+             where: { id: transaction.accountId },
+             data: {
+                balance: { increment: balanceAdjustment }
+             }
+          })
+
+         await tx.transaction.update({
+            where: { id: transaction.id },
+            data: {
+              lastProcessed: new Date(),  
+              nextRecurringDate: calculateNextRecurringDate(new Date(), transaction.recurringInterval)
+            }
+         })
+        })
+    })
+})
+
+function isTransactionDue(transaction: any) {
+    if(!transaction.lastProcessed) return true;
+
+    const today = new Date();
+    return new Date(transaction.nextRecurringDate) <= today;
 }
 
 export const generateMonthlyReports = inngest.createFunction(
