@@ -1,10 +1,11 @@
+export const dynamic = "force-dynamic";
+
 import { getUserAccounts } from '@/actions/dashboard'
 import { defaultCategories } from '@/components/data/categories';
-import React from 'react'
 import AddTransactionForm from '../_components/transaction-form';
 import { getTransaction } from '@/actions/transaction';
 
-const AddTransaction = async({ searchParams }: any) => {
+const AddTransactionPage = async ({ searchParams }: any) => {
   const accounts = await getUserAccounts();
   const editId = searchParams?.edit
 
@@ -30,4 +31,4 @@ const AddTransaction = async({ searchParams }: any) => {
   )
 }
 
-export default AddTransaction
+export default AddTransactionPage;
