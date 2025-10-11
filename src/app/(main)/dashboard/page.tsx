@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getDashboardData, getUserAccounts } from '@/actions/dashboard'
 import CreateAccountDrawer from '@/components/create-account-drawer'
 import { Card, CardContent } from '@/components/ui/card'
@@ -16,7 +17,7 @@ const DashboardPage = async() => {
   let budgetData = null
   if(defaultAccount) {
     budgetData = await getCurrentBudget(defaultAccount.id)
-  }  
+  }
 
   const transactions = await getDashboardData();
 
