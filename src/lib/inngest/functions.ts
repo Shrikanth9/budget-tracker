@@ -264,7 +264,7 @@ export const generateMonthlyReports = inngest.createFunction(
 
 async function generateFinancialInsights(stats: any, month: string) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);   
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash'})
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash'})
 
     const prompt = `
     Analyze this financial data and provide 3 concise, actionable insights.
