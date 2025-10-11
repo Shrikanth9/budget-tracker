@@ -49,7 +49,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-20 bg-blue-50">
+      <section className="py-20 bg-blue-50 mb-20">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-16">How It works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -66,59 +66,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            What our users say
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonialsData.map((testimony, index) => (
-              <Card key={index} className="p-6">
-                <CardContent className="pt-4">
-                  <div className="flex items-center mb-4">
-                    <Image
-                      src={testimony.image}
-                      alt={testimony.name}
-                      width={40}
-                      height={40}
-                      className="rounded-full"
-                    />
-                  </div>
-                  <div className="ml-4">
-                    <div className="font-semibold">{testimony.name}</div>
-                    <div className="text-sm text-gray-600">
-                      {testimony.role}
-                    </div>
-                  </div>
-                  <p className="text-gray-600">{testimony.quote}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 bg-blue-600">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Ready to take control of your budgets?
-          </h2>
-          <p className="text-blue-100 mb-8 max-w-2xl mx-auto">
-            {" "}
-            Join thousands of users who are already managing their finances
-          </p>
-          <Link href="/dashboard">
-            <Button
-              size="lg"
-              className="bg-white text-blue-600 hover:bg-blue-50 
-              animate-bounce"
-            >
-              Start free trial
-            </Button>
-          </Link>
         </div>
       </section>
     </div>
